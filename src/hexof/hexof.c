@@ -110,13 +110,8 @@ int main(int argc, char *argv[])
 
 	/* Get offset of the pattern in file. */
 	patt_pos = _memmem(file_data + start_offset, pattern, file_len - start_offset, patt_len);
-	free(file_data);
-	if (patt_pos) {
+	if (patt_pos)
 		printf("%lu\n", (unsigned long)(patt_pos - file_data));
-		return 0;
-	} else {
-		return 2;
-	}
-
-	return 0;
+	free(file_data);
+	return (patt_pos) ? 0 : 2;
 }
