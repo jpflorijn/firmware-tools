@@ -1,7 +1,9 @@
+#ifndef COMPRESSOR_H
+#define COMPRESSOR_H
 /*
  *
- * Copyright (c) 2009, 2010, 2011
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2022
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +23,9 @@
  */
 
 struct compressor {
+	int id;
+	char *name;
+	int supported;
 	int (*init)(void **, int, int);
 	int (*compress)(void *, void *, void *, int, int, int *);
 	int (*uncompress)(void *, void *, int, int, int *);
@@ -28,16 +33,16 @@ struct compressor {
 	int (*options_post)(int);
 	void *(*dump_options)(int, int *);
 	int (*extract_options)(int, void *, int);
-	void (*usage)();
-	int id;
-	char *name;
-	int supported;
+	int (*check_options)(int, void *, int);
+	void (*display_options)(void *, int);
+	void (*usage)(FILE *);
+	int (*option_args)(char *);
 };
 
 extern struct compressor *lookup_compressor(char *);
 extern struct compressor *lookup_compressor_id(int);
-extern void display_compressors(char *, char *);
-extern void display_compressor_usage(char *);
+extern void display_compressors(FILE *stream, char *, char *);
+extern void display_compressor_usage(FILE *stream, char *);
 
 static inline int compressor_init(struct compressor *comp, void **stream,
 	int block_size, int datablock)
@@ -62,6 +67,10 @@ static inline int compressor_uncompress(struct compressor *comp, void *dest,
 }
 
 
+/*
+ * For the following functions please see the lzo, lz4 or xz
+ * compressors for commented examples of how they are used.
+ */
 static inline int compressor_options(struct compressor *comp, char *argv[],
 	int argc)
 {
@@ -96,3 +105,28 @@ static inline int compressor_extract_options(struct compressor *comp,
 		return size ? -1 : 0;
 	return comp->extract_options(block_size, buffer, size);
 }
+
+
+static inline int compressor_check_options(struct compressor *comp,
+	int block_size, void *buffer, int size)
+{
+	if(comp->check_options == NULL)
+		return 0;
+	return comp->check_options(block_size, buffer, size);
+}
+
+
+static inline void compressor_display_options(struct compressor *comp,
+	void *buffer, int size)
+{
+	if(comp->display_options != NULL)
+		comp->display_options(buffer, size);
+}
+
+static inline int compressor_option_args(struct compressor *comp, char *option)
+{
+	if(comp == NULL || comp->option_args == NULL)
+		return 0;
+	return comp->option_args(option);
+}
+#endif

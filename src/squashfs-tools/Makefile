@@ -1,8 +1,12 @@
 ###############################################
-#          Compression build options          #
+#                Build options                #
 ###############################################
 #
+# Edit the following definitions to customise the build, or run
+# "CONFIG=1 make" with the build options below to customise the build on
+# the command line.
 #
+ifndef CONFIG
 ############# Building gzip support ###########
 #
 # Gzip support is by default enabled, and the compression type default
@@ -12,8 +16,8 @@
 # below, and change COMP_DEFAULT to one of the compression types you have
 # selected.
 #
-# Obviously, you must select at least one of the available gzip, lzma, lzo
-# compression types.
+# Obviously, you must select at least one of the available gzip, xz, lzo,
+# lz4, zstd or lzma (deprecated) compression types.
 #
 GZIP_SUPPORT = 1
 
@@ -23,43 +27,65 @@ GZIP_SUPPORT = 1
 #
 # XZ Utils liblzma (http://tukaani.org/xz/) is supported
 #
-# To build using XZ Utils liblzma - install the library and uncomment
+# Development packages (libraries and header files) should be
+# supported by most modern distributions.  Please refer to
+# your distribution package manager.
+#
+# To build install the library and uncomment
 # the XZ_SUPPORT line below.
 #
-XZ_SUPPORT = 1
+#XZ_SUPPORT = 1
+
+# Enable support for OpenWrt extended compression options by uncommenting
+# next line.  Do not do this unless you understand the implications.
+#XZ_EXTENDED_OPTIONS = 1
 
 
 ############ Building LZO support ##############
 #
 # The LZO library (http://www.oberhumer.com/opensource/lzo/) is supported.
 #
-# To build using the LZO library - install the library and uncomment the
-# LZO_SUPPORT line below. If needed, uncomment and set LZO_DIR to the
-# installation prefix.
+# Development packages (libraries and header files) should be
+# supported by most modern distributions.  Please refer to
+# your distribution package manager.
+#
+# To build install the library and uncomment
+# the LZO_SUPPORT line below.
 #
 #LZO_SUPPORT = 1
-#LZO_DIR = /usr/local
 
-########### Building LZMA support #############
+
+########### Building LZ4 support #############
 #
-# LZMA1 compression.
+# Yann Collet's LZ4 tools are supported
+# LZ4 homepage: https://lz4.github.io/lz4/
+# LZ4 source repository: https://github.com/lz4/lz4/
 #
-# LZMA1 compression is deprecated, and the newer and better XZ (LZMA2)
-# compression should be used in preference.
+# Development packages (libraries and header files) should be
+# supported by most modern distributions.  Please refer to
+# your distribution package manager.
 #
-# Both XZ Utils liblzma (http://tukaani.org/xz/) and LZMA SDK
-# (http://www.7-zip.org/sdk.html) are supported
+# To build install and uncomment
+# the LZ4_SUPPORT line below.
 #
-# To build using XZ Utils liblzma - install the library and uncomment
-# the LZMA_XZ_SUPPORT line below.
+#LZ4_SUPPORT = 1
+
+
+########### Building ZSTD support ############
 #
-# To build using the LZMA SDK (4.65 used in development, other versions may
-# work) - download and unpack it, uncomment and set LZMA_DIR to unpacked source,
-# and uncomment the LZMA_SUPPORT line below.
+# The ZSTD library is supported
+# ZSTD homepage: https://facebook.github.io/zstd/
+# ZSTD source repository: https://github.com/facebook/zstd
 #
-#LZMA_XZ_SUPPORT = 1
-#LZMA_SUPPORT = 1
-#LZMA_DIR = ../../../../LZMA/lzma465
+# Development packages (libraries and header files) should be
+# supported by most modern distributions.  Please refer to
+# your distribution package manager.
+#
+# To build install the library and uncomment
+# the ZSTD_SUPPORT line below.
+#
+#ZSTD_SUPPORT = 1
+
 
 ######## Specifying default compression ########
 #
@@ -68,6 +94,7 @@ XZ_SUPPORT = 1
 # selected to be built
 #
 COMP_DEFAULT = gzip
+
 
 ###############################################
 #  Extended attribute (XATTRs) build options  #
@@ -90,16 +117,104 @@ XATTR_DEFAULT = 1
 
 
 ###############################################
-#        End of BUILD options section         #
+#          Reproducible Image options         #
+###############################################
+#
+# Select whether you wish reproducible builds by default.  If selected users
+# can disable reproducible builds using the not-reproducible option.
+# If not selected, users can enable reproducible builds using the
+# -reproducible option
+REPRODUCIBLE_DEFAULT = 1
+
+###############################################
+#               Manpage generation            #
+###############################################
+#
+# If help2man is available on the system, on installation, the Makefile
+# will try to generate "custom" manpages from the built squashfs-tools.
+#
+# If the squashfs-tools have been cross-compiled, or for any other
+# reason they're not executable, this will generate errors at
+# installation and the install script will fall back to using
+# pre-built manpages.
+#
+# Change next variable to "y" to use the pre-built manpages by default,
+# and not attempt to generate "custom" manpages.  This will eliminate
+# errors and warnings at install time.
+USE_PREBUILT_MANPAGES=n
+
+###############################################
+#              INSTALL PATHS                  #
+###############################################
+#
+# Alter INSTALL_* to install binaries and manpages
+# elsewhere.
+#
+# To skip building and installing manpages,
+# unset INSTALL_MANPAGES_DIR or set to ""
+#
+INSTALL_PREFIX = /usr/local
+INSTALL_DIR = $(INSTALL_PREFIX)/bin
+INSTALL_MANPAGES_DIR = $(INSTALL_PREFIX)/man/man1
+
+###############################################
+#              Obsolete options               #
 ###############################################
 
-INCLUDEDIR = -I.
-INSTALL_DIR = /usr/local/bin
+########### Building LZMA support #############
+#
+# LZMA1 compression.
+#
+# LZMA1 compression is obsolete, and the newer and better XZ (LZMA2)
+# compression should be used in preference.
+#
+# Both XZ Utils liblzma (http://tukaani.org/xz/) and LZMA SDK
+# (http://www.7-zip.org/sdk.html) are supported
+#
+# To build using XZ Utils liblzma - install the library and uncomment
+# the LZMA_XZ_SUPPORT line below.
+#
+# To build using the LZMA SDK (4.65 used in development, other versions may
+# work) - download and unpack it, uncomment and set LZMA_DIR to unpacked source,
+# and uncomment the LZMA_SUPPORT line below.
+#
+#LZMA_XZ_SUPPORT = 1
+#LZMA_SUPPORT = 1
+#LZMA_DIR = ../../../../LZMA/lzma465
+else
+GZIP_SUPPORT ?= 1
+ZX_SUPPORT ?= 0
+LZO_SUPPORT ?= 0
+LZ4_SUPPORT ?= 0
+ZSTD_SUPPORT ?= 0
+COMP_DEFAULT ?= gzip
+XATTR_SUPPORT ?= 1
+XATTR_DEFAULT ?= 1
+REPRODUCIBLE_DEFAULT ?= 1
+USE_PREBUILT_MANPAGES ?= 1
+INSTALL_PREFIX ?= /usr/local
+INSTALL_DIR ?= $(INSTALL_PREFIX)/bin
+INSTALL_MANPAGES_DIR ?= $(INSTALL_PREFIX)/man/man1
+LZMA_XZ_SUPPORT ?= 0
+LZMA_SUPPORT ?= 0
+LZMA_DIR ?= ../../../../LZMA/lzma465
+XZ_EXTENDED_OPTIONS ?= 0
+endif
 
-MKSQUASHFS_OBJS = mksquashfs.o read_fs.o sort.o swap.o pseudo.o compressor.o
+
+###############################################
+#        End of BUILD options section         #
+###############################################
+#
+INCLUDEDIR = -I.
+
+MKSQUASHFS_OBJS = mksquashfs.o read_fs.o action.o swap.o pseudo.o compressor.o \
+	sort.o progressbar.o info.o restore.o process_fragments.o \
+	caches-queues-lists.o reader.o tar.o date.o
 
 UNSQUASHFS_OBJS = unsquashfs.o unsquash-1.o unsquash-2.o unsquash-3.o \
-	unsquash-4.o swap.o compressor.o
+	unsquash-4.o unsquash-123.o unsquash-34.o unsquash-1234.o unsquash-12.o \
+	swap.o compressor.o unsquashfs_info.o date.o
 
 CFLAGS ?= -O2
 CFLAGS += $(EXTRA_CFLAGS) $(INCLUDEDIR) -D_FILE_OFFSET_BITS=64 \
@@ -129,37 +244,45 @@ ifeq ($(LZMA_XZ_SUPPORT),1)
 CFLAGS += -DLZMA_SUPPORT
 MKSQUASHFS_OBJS += lzma_xz_wrapper.o
 UNSQUASHFS_OBJS += lzma_xz_wrapper.o
+LIBS += -llzma
 COMPRESSORS += lzma
 endif
 
 ifeq ($(XZ_SUPPORT),1)
 CFLAGS += -DXZ_SUPPORT
+ifeq ($(XZ_EXTENDED_OPTIONS),1)
+MKSQUASHFS_OBJS += xz_wrapper_extended.o
+UNSQUASHFS_OBJS += xz_wrapper_extended.o
+else
 MKSQUASHFS_OBJS += xz_wrapper.o
 UNSQUASHFS_OBJS += xz_wrapper.o
-COMPRESSORS += xz
 endif
-
-ifneq ($(LZMA_XZ_SUPPORT)$(XZ_SUPPORT),)
-MKSQUASHFS_OBJS += lzma_xz_options.o
-UNSQUASHFS_OBJS += lzma_xz_options.o
-ifneq ($(LZMA_LIB),)
-MKSQUASHFS_OBJS += $(LZMA_LIB)
-UNSQUASHFS_OBJS += $(LZMA_LIB)
-else
 LIBS += -llzma
-endif
+COMPRESSORS += xz
 endif
 
 ifeq ($(LZO_SUPPORT),1)
 CFLAGS += -DLZO_SUPPORT
-ifdef LZO_DIR
-INCLUDEDIR += -I$(LZO_DIR)/include
-LZO_LIBDIR = -L$(LZO_DIR)/lib
-endif
 MKSQUASHFS_OBJS += lzo_wrapper.o
 UNSQUASHFS_OBJS += lzo_wrapper.o
-LIBS += $(LZO_LIBDIR) -llzo2
+LIBS += -llzo2
 COMPRESSORS += lzo
+endif
+
+ifeq ($(LZ4_SUPPORT),1)
+CFLAGS += -DLZ4_SUPPORT
+MKSQUASHFS_OBJS += lz4_wrapper.o
+UNSQUASHFS_OBJS += lz4_wrapper.o
+LIBS += -llz4
+COMPRESSORS += lz4
+endif
+
+ifeq ($(ZSTD_SUPPORT),1)
+CFLAGS += -DZSTD_SUPPORT
+MKSQUASHFS_OBJS += zstd_wrapper.o
+UNSQUASHFS_OBJS += zstd_wrapper.o
+LIBS += -lzstd
+COMPRESSORS += zstd
 endif
 
 ifeq ($(XATTR_SUPPORT),1)
@@ -168,8 +291,12 @@ CFLAGS += -DXATTR_SUPPORT -DXATTR_DEFAULT
 else
 CFLAGS += -DXATTR_SUPPORT
 endif
-MKSQUASHFS_OBJS += xattr.o read_xattrs.o
+MKSQUASHFS_OBJS += xattr.o read_xattrs.o tar_xattr.o pseudo_xattr.o
 UNSQUASHFS_OBJS += read_xattrs.o unsquashfs_xattr.o
+endif
+
+ifeq ($(REPRODUCIBLE_DEFAULT),1)
+CFLAGS += -DREPRODUCIBLE_DEFAULT
 endif
 
 #
@@ -194,74 +321,159 @@ endif
 # At least one compressor must have been selected
 #
 ifndef COMPRESSORS
-$(error "No compressor selected! Select one or more of GZIP, LZMA, XZ or LZO!")
+$(error "No compressor selected! Select one or more of GZIP, LZMA, XZ, LZO, \
+	LZ4 or ZSTD!")
+endif
+
+#
+# COMP_DEFAULT should be defined
+#
+ifndef COMP_DEFAULT
+$(error "COMP_DEFAULT must be set to a compressor!")
 endif
 
 #
 # COMP_DEFAULT must be a selected compressor
 #
 ifeq (, $(findstring $(COMP_DEFAULT), $(COMPRESSORS)))
-$(error "COMP_DEFAULT isn't selected to be built!")
+$(error "COMP_DEFAULT is set to ${COMP_DEFAULT}, which isn't selected to be \
+	built!")
 endif
+
+#
+# Get VERSION and DATE for Mksquashfs/Unsquashfs version strings.
+#
+# If RELEASE_VERSION/RELEASE_DATE set, use them.
+#
+# If not set, this is a development version, therefore
+#
+# If this source has been exported by "git archive" use automatically
+# expanded strings.
+#
+# Otherwise ask git for the details from current HEAD.
+#
+include version.mk
+
+ifdef RELEASE_VERSION
+VERSION := $(RELEASE_VERSION)
+DATE := $(RELEASE_DATE)
+else
+ifeq ($(HASH),$Format:%h$)
+VERSION := 4.6.1-$(shell git show -s --pretty=format:%h)
+DATE := $(firstword $(subst -,/,$(shell git show -s --pretty=format:%ci)))
+else
+VERSION := 4.6.1-$(HASH)
+DATE := $(firstword $(FULLDATE))
+endif
+endif
+
+YEAR := $(firstword $(subst /, , $(DATE)))
+
+CFLAGS += -DVERSION=\"$(VERSION)\" -DDATE=\"$(DATE)\" -DYEAR=\"$(YEAR)\"
 
 .PHONY: all
 all: mksquashfs unsquashfs
 
 mksquashfs: $(MKSQUASHFS_OBJS)
 	$(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) $(MKSQUASHFS_OBJS) $(LIBS) -o $@
+	ln -sf mksquashfs sqfstar
 
-mksquashfs.o: mksquashfs.c squashfs_fs.h mksquashfs.h sort.h squashfs_swap.h \
-	xattr.h pseudo.h compressor.h
+mksquashfs.o: Makefile mksquashfs.c squashfs_fs.h squashfs_swap.h mksquashfs.h \
+	sort.h pseudo.h compressor.h xattr.h action.h mksquashfs_error.h progressbar.h \
+	info.h caches-queues-lists.h read_fs.h restore.h process_fragments.h 
 
-read_fs.o: read_fs.c squashfs_fs.h read_fs.h squashfs_swap.h compressor.h \
-	xattr.h
+reader.o: squashfs_fs.h mksquashfs.h caches-queues-lists.h progressbar.h \
+	mksquashfs_error.h pseudo.h sort.h
 
-sort.o: sort.c squashfs_fs.h sort.h mksquashfs.h
+read_fs.o: read_fs.c squashfs_fs.h squashfs_swap.h compressor.h xattr.h \
+	mksquashfs_error.h mksquashfs.h
+
+sort.o: sort.c squashfs_fs.h mksquashfs.h sort.h mksquashfs_error.h progressbar.h
 
 swap.o: swap.c
 
-pseudo.o: pseudo.c pseudo.h
+pseudo.o: pseudo.c pseudo.h mksquashfs_error.h progressbar.h
 
-compressor.o: compressor.c compressor.h squashfs_fs.h
+pseudo_xattr.o: pseudo_xattr.c xattr.h mksquashfs_error.h progressbar.h
 
-xattr.o: xattr.c xattr.h squashfs_fs.h squashfs_swap.h mksquashfs.h
+compressor.o: Makefile compressor.c compressor.h squashfs_fs.h
 
-read_xattrs.o: read_xattrs.c xattr.h squashfs_fs.h squashfs_swap.h read_fs.h
+xattr.o: xattr.c squashfs_fs.h squashfs_swap.h mksquashfs.h xattr.h mksquashfs_error.h \
+	progressbar.h
 
-gzip_wrapper.o: gzip_wrapper.c compressor.h squashfs_fs.h
+read_xattrs.o: read_xattrs.c squashfs_fs.h squashfs_swap.h xattr.h error.h
+
+action.o: action.c squashfs_fs.h mksquashfs.h action.h mksquashfs_error.h
+
+progressbar.o: progressbar.c mksquashfs_error.h
+
+info.o: info.c squashfs_fs.h mksquashfs.h mksquashfs_error.h progressbar.h \
+	caches-queues-lists.h
+
+restore.o: restore.c caches-queues-lists.h squashfs_fs.h mksquashfs.h mksquashfs_error.h \
+	progressbar.h info.h
+
+process_fragments.o: process_fragments.c process_fragments.h
+
+caches-queues-lists.o: caches-queues-lists.c mksquashfs_error.h caches-queues-lists.h
+
+tar.o: tar.h
+
+tar_xattr.o: tar.h xattr.h
+
+date.o: date.h error.h
+
+gzip_wrapper.o: gzip_wrapper.c squashfs_fs.h gzip_wrapper.h compressor.h
 
 lzma_wrapper.o: lzma_wrapper.c compressor.h squashfs_fs.h
 
 lzma_xz_wrapper.o: lzma_xz_wrapper.c compressor.h squashfs_fs.h
 
-lzo_wrapper.o: lzo_wrapper.c compressor.h squashfs_fs.h
+lzo_wrapper.o: lzo_wrapper.c squashfs_fs.h lzo_wrapper.h compressor.h
 
-xz_wrapper.o: xz_wrapper.c compressor.h squashfs_fs.h
+lz4_wrapper.o: lz4_wrapper.c squashfs_fs.h lz4_wrapper.h compressor.h
+
+xz_wrapper.o: xz_wrapper.c squashfs_fs.h xz_wrapper.h compressor.h
+
+xz_wrapper_extended.o: xz_wrapper_extended.c squashfs_fs.h xz_wrapper.h compressor.h
 
 unsquashfs: $(UNSQUASHFS_OBJS)
 	$(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) $(UNSQUASHFS_OBJS) $(LIBS) -o $@
+	ln -sf unsquashfs sqfscat
 
 unsquashfs.o: unsquashfs.h unsquashfs.c squashfs_fs.h squashfs_swap.h \
-	squashfs_compat.h xattr.h read_fs.h compressor.h
+	squashfs_compat.h xattr.h read_fs.h compressor.h unsquashfs_error.h
 
-unsquash-1.o: unsquashfs.h unsquash-1.c squashfs_fs.h squashfs_compat.h
+unsquash-1.o: unsquashfs.h unsquash-1.c squashfs_fs.h squashfs_compat.h unsquashfs_error.h
 
-unsquash-2.o: unsquashfs.h unsquash-2.c squashfs_fs.h squashfs_compat.h
+unsquash-2.o: unsquashfs.h unsquash-2.c squashfs_fs.h squashfs_compat.h unsquashfs_error.h
 
-unsquash-3.o: unsquashfs.h unsquash-3.c squashfs_fs.h squashfs_compat.h
+unsquash-3.o: unsquashfs.h unsquash-3.c squashfs_fs.h squashfs_compat.h unsquashfs_error.h
 
 unsquash-4.o: unsquashfs.h unsquash-4.c squashfs_fs.h squashfs_swap.h \
-	read_fs.h
+	read_fs.h unsquashfs_error.h
 
-unsquashfs_xattr.o: unsquashfs_xattr.c unsquashfs.h squashfs_fs.h xattr.h
+unsquash-123.o: unsquashfs.h unsquash-123.c squashfs_fs.h squashfs_compat.h unsquashfs_error.h
 
+unsquash-34.o: unsquashfs.h unsquash-34.c unsquashfs_error.h
+
+unsquash-1234.o: unsquash-1234.c unsquashfs_error.h
+
+unsquash-12.o: unsquash-12.c unsquashfs.h
+
+unsquashfs_xattr.o: unsquashfs_xattr.c unsquashfs.h squashfs_fs.h xattr.h unsquashfs_error.h
+
+unsquashfs_info.o: unsquashfs.h squashfs_fs.h unsquashfs_error.h
 
 .PHONY: clean
 clean:
-	-rm -f *.o mksquashfs unsquashfs
+	-rm -f *.o mksquashfs unsquashfs sqfstar sqfscat *.1
 
 .PHONY: install
 install: mksquashfs unsquashfs
 	mkdir -p $(INSTALL_DIR)
 	cp mksquashfs $(INSTALL_DIR)
 	cp unsquashfs $(INSTALL_DIR)
+	ln -fs unsquashfs $(INSTALL_DIR)/sqfscat
+	ln -fs mksquashfs $(INSTALL_DIR)/sqfstar
+	../generate-manpages/install-manpages.sh $(shell pwd)/.. "$(INSTALL_MANPAGES_DIR)" "$(USE_PREBUILT_MANPAGES)"

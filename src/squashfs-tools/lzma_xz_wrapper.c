@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2010, 2013, 2022
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,6 @@
 
 #include "squashfs_fs.h"
 #include "compressor.h"
-#include "lzma_xz_options.h"
 
 #define LZMA_PROPS_SIZE 5
 #define LZMA_UNCOMP_SIZE 8
@@ -39,27 +38,13 @@
 static int lzma_compress(void *dummy, void *dest, void *src,  int size,
 	int block_size, int *error)
 {
-	uint32_t preset;
 	unsigned char *d = (unsigned char *) dest;
-	struct lzma_xz_options *opts = lzma_xz_get_options();
-
 	lzma_options_lzma opt;
 	lzma_stream strm = LZMA_STREAM_INIT;
 	int res;
 
-	preset = opts->preset;
-
-	if (opts->extreme)
-		preset |= LZMA_PRESET_EXTREME;
-
-	lzma_lzma_preset(&opt, opts->preset);
-	opt.lc = opts->lc;
-	opt.lp = opts->lp;
-	opt.pb = opts->pb;
-	if (opts->fb)
-		opt.nice_len = opts->fb;
-
-	opt.dict_size = opts->dict_size;
+	lzma_lzma_preset(&opt, LZMA_OPTIONS);
+	opt.dict_size = block_size;
 
 	res = lzma_alone_encoder(&strm, &opt);
 	if(res != LZMA_OK) {
@@ -111,7 +96,7 @@ failed:
 }
 
 
-static int lzma_uncompress(void *dest, void *src, int size, int block_size,
+static int lzma_uncompress(void *dest, void *src, int size, int outsize,
 	int *error)
 {
 	lzma_stream strm = LZMA_STREAM_INIT;
@@ -129,10 +114,16 @@ static int lzma_uncompress(void *dest, void *src, int size, int block_size,
 		(lzma_header[LZMA_PROPS_SIZE + 1] << 8) |
 		(lzma_header[LZMA_PROPS_SIZE + 2] << 16) |
 		(lzma_header[LZMA_PROPS_SIZE + 3] << 24);
+
+	if(uncompressed_size > outsize) {
+		res = 0;
+		goto failed;
+	}
+
 	memset(lzma_header + LZMA_PROPS_SIZE, 255, LZMA_UNCOMP_SIZE);
 
 	strm.next_out = dest;
-	strm.avail_out = block_size;
+	strm.avail_out = outsize;
 	strm.next_in = lzma_header;
 	strm.avail_in = LZMA_HEADER_SIZE;
 
@@ -158,33 +149,10 @@ failed:
 	return -1;
 }
 
-static int lzma_options(char *argv[], int argc)
+
+static void lzma_usage(FILE *stream)
 {
-	return lzma_xz_options(argv, argc, LZMA_OPT_LZMA);
-}
-
-
-static int lzma_options_post(int block_size)
-{
-	return lzma_xz_options_post(block_size, LZMA_OPT_LZMA);
-}
-
-
-static void *lzma_dump_options(int block_size, int *size)
-{
-	return lzma_xz_dump_options(block_size, size, 0);
-}
-
-
-static int lzma_extract_options(int block_size, void *buffer, int size)
-{
-	return lzma_xz_extract_options(block_size, buffer, size, LZMA_OPT_LZMA);
-}
-
-
-void lzma_usage()
-{
-	lzma_xz_usage(LZMA_OPT_LZMA);
+	fprintf(stream, "\t  (no options) (deprecated - no kernel support)\n");
 }
 
 
@@ -192,10 +160,7 @@ struct compressor lzma_comp_ops = {
 	.init = NULL,
 	.compress = lzma_compress,
 	.uncompress = lzma_uncompress,
-	.options = lzma_options,
-	.options_post = lzma_options_post,
-	.dump_options = lzma_dump_options,
-	.extract_options = lzma_extract_options,
+	.options = NULL,
 	.usage = lzma_usage,
 	.id = LZMA_COMPRESSION,
 	.name = "lzma",

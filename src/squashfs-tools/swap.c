@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2009, 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2009, 2010, 2021
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,15 +19,7 @@
  * swap.c
  */
 
-#ifndef linux
-#ifndef __CYGWIN__
-#define __BYTE_ORDER BYTE_ORDER
-#define __BIG_ENDIAN BIG_ENDIAN
-#define __LITTLE_ENDIAN LITTLE_ENDIAN
-#endif
-#else
-#include <endian.h>
-#endif
+#include "endian_compat.h"
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 void swap_le16(void *src, void *dest)

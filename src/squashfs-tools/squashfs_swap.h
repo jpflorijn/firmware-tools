@@ -3,8 +3,8 @@
 /*
  * Squashfs
  *
- * Copyright (c) 2008, 2009, 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2008, 2009, 2010, 2013, 2019, 2021
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,8 @@
 /*
  * macros to convert each stucture from big endian to little endian
  */
+
+#include "endian_compat.h"
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #include <stddef.h>
@@ -281,6 +283,14 @@ extern void inswap_le64_num(long long *, int);
 #define SQUASHFS_SWAP_LOOKUP_BLOCKS(s, d, n) SQUASHFS_SWAP_LONG_LONGS(s, d, n)
 #define SQUASHFS_SWAP_ID_BLOCKS(s, d, n) SQUASHFS_SWAP_LONG_LONGS(s, d, n)
 
+#define SQUASHFS_SWAP_SHORTS(s, d, n) swap_le16_num(s, d, n)
+#define SQUASHFS_SWAP_INTS(s, d, n) swap_le32_num(s, d, n)
+#define SQUASHFS_SWAP_LONG_LONGS(s, d, n) swap_le64_num(s, d, n)
+
+#define SWAP_LE16(s, d)		swap_le16(s, d)
+#define SWAP_LE32(s, d)		swap_le32(s, d)
+#define SWAP_LE64(s, d)		swap_le64(s, d)
+
 /* big endian architecture swap in-place macros */
 #define SQUASHFS_INSWAP_SUPER_BLOCK(s) \
 			_SQUASHFS_SWAP_SUPER_BLOCK(s, s, INSWAP_LE)
@@ -335,48 +345,54 @@ extern void inswap_le64_num(long long *, int);
 #else
 /* little endian architecture, just copy */
 #define SQUASHFS_SWAP_SUPER_BLOCK(s, d)	\
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_super_block))
 #define SQUASHFS_SWAP_DIR_INDEX(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_dir_index))
 #define SQUASHFS_SWAP_BASE_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_base_inode_header))
 #define SQUASHFS_SWAP_IPC_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_ipc_inode_header))
 #define SQUASHFS_SWAP_LIPC_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_lipc_inode_header))
 #define SQUASHFS_SWAP_DEV_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_dev_inode_header))
 #define SQUASHFS_SWAP_LDEV_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_ldev_inode_header))
 #define SQUASHFS_SWAP_SYMLINK_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_symlink_inode_header))
 #define SQUASHFS_SWAP_REG_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_reg_inode_header))
 #define SQUASHFS_SWAP_LREG_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_lreg_inode_header))
 #define SQUASHFS_SWAP_DIR_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_dir_inode_header))
 #define SQUASHFS_SWAP_LDIR_INODE_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_ldir_inode_header))
 #define SQUASHFS_SWAP_DIR_ENTRY(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_dir_entry))
 #define SQUASHFS_SWAP_DIR_HEADER(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_dir_header))
 #define SQUASHFS_SWAP_FRAGMENT_ENTRY(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_fragment_entry))
 #define SQUASHFS_SWAP_XATTR_ENTRY(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_xattr_entry))
 #define SQUASHFS_SWAP_XATTR_VAL(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_xattr_val))
 #define SQUASHFS_SWAP_XATTR_ID(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_xattr_id))
 #define SQUASHFS_SWAP_XATTR_TABLE(s, d) \
-		SQUASHFS_MEMCPY(s, d, sizeof(*(s)))
+		SQUASHFS_MEMCPY(s, d, sizeof(struct squashfs_xattr_table))
 #define SQUASHFS_SWAP_INODE_T(s, d) SQUASHFS_SWAP_LONG_LONGS(s, d, 1)
 #define SQUASHFS_SWAP_FRAGMENT_INDEXES(s, d, n) \
 			SQUASHFS_SWAP_LONG_LONGS(s, d, n)
 #define SQUASHFS_SWAP_LOOKUP_BLOCKS(s, d, n) SQUASHFS_SWAP_LONG_LONGS(s, d, n)
 #define SQUASHFS_SWAP_ID_BLOCKS(s, d, n) SQUASHFS_SWAP_LONG_LONGS(s, d, n)
+
+#define SQUASHFS_MEMCPY(s, d, n)	memcpy(d, s, n)
+#define SQUASHFS_SWAP_SHORTS(s, d, n)	memcpy(d, s, n * sizeof(short))
+#define SQUASHFS_SWAP_INTS(s, d, n)	memcpy(d, s, n * sizeof(int))
+#define SQUASHFS_SWAP_LONG_LONGS(s, d, n) \
+					memcpy(d, s, n * sizeof(long long))
 
 /* little endian architecture, data already in place so do nothing */
 #define SQUASHFS_INSWAP_SUPER_BLOCK(s)

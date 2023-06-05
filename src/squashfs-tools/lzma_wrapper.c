@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2009, 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2009, 2010, 2013, 2022
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -79,7 +79,7 @@ static int lzma_compress(void *strm, void *dest, void *src, int size, int block_
 }
 
 
-static int lzma_uncompress(void *dest, void *src, int size, int block_size,
+static int lzma_uncompress(void *dest, void *src, int size, int outsize,
 	int *error)
 {
 	unsigned char *s = src;
@@ -91,11 +91,26 @@ static int lzma_uncompress(void *dest, void *src, int size, int block_size,
 		(s[LZMA_PROPS_SIZE + 2] << 16) |
 		(s[LZMA_PROPS_SIZE + 3] << 24);
 
+	if(outlen > outsize) {
+		*error = 0;
+		return -1;
+	}
+
 	res = LzmaUncompress(dest, &outlen, src + LZMA_HEADER_SIZE, &inlen, src,
 		LZMA_PROPS_SIZE);
 	
-	*error = res;
-	return res == SZ_OK ? outlen : -1;
+	if(res == SZ_OK)
+		return outlen;
+	else {
+		*error = res;
+		return -1;
+	}
+}
+
+
+static void lzma_usage(FILE *stream)
+{
+	fprintf(stream, "\t  (no options) (deprecated - no kernel support)\n");
 }
 
 
@@ -104,7 +119,7 @@ struct compressor lzma_comp_ops = {
 	.compress = lzma_compress,
 	.uncompress = lzma_uncompress,
 	.options = NULL,
-	.usage = NULL,
+	.usage = lzma_usage,
 	.id = LZMA_COMPRESSION,
 	.name = "lzma",
 	.supported = 1

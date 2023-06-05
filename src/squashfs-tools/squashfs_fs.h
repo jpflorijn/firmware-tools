@@ -3,8 +3,9 @@
 /*
  * Squashfs
  *
- * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012,
+ * 2013, 2014, 2017, 2019, 2022
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,28 +31,27 @@
 #define SQUASHFS_MAGIC_SWAP		0x68737173
 #define SQUASHFS_START			0
 
-/*
- * Squashfs + LZMA
- */
-
-#define SQUASHFS_MAGIC_LZMA		0x71736873
-#define SQUASHFS_MAGIC_LZMA_SWAP	0x73687371
-
 /* size of metadata (inode and directory) blocks */
 #define SQUASHFS_METADATA_SIZE		8192
 #define SQUASHFS_METADATA_LOG		13
 
 /* default size of data blocks */
 #define SQUASHFS_FILE_SIZE		131072
-#define SQUASHFS_FILE_LOG		17
 
 #define SQUASHFS_FILE_MAX_SIZE		1048576
+#define SQUASHFS_FILE_MAX_LOG		20
 
 /* Max number of uids and gids */
 #define SQUASHFS_IDS			65536
 
 /* Max length of filename (not 255) */
 #define SQUASHFS_NAME_LEN		256
+
+/* Max value for directory header count */
+#define SQUASHFS_DIR_COUNT		256
+
+/* Max length of a symbolic ink */
+#define SQUASHFS_SYMLINK_MAX		65535
 
 #define SQUASHFS_INVALID		((long long) 0xffffffffffff)
 #define SQUASHFS_INVALID_FRAG		((unsigned int) 0xffffffff)
@@ -71,6 +71,7 @@
 #define SQUASHFS_NOX			8
 #define SQUASHFS_NO_XATTR		9
 #define SQUASHFS_COMP_OPT		10
+#define SQUASHFS_NOID			11
 
 #define SQUASHFS_BIT(flag, bit)		((flag >> bit) & 1)
 
@@ -104,12 +105,15 @@
 #define SQUASHFS_COMP_OPTS(flags)		SQUASHFS_BIT(flags, \
 						SQUASHFS_COMP_OPT)
 
-#define SQUASHFS_MKFLAGS(noi, nod, nof, nox, no_frag, always_frag, \
+#define SQUASHFS_UNCOMPRESSED_IDS(flags)	SQUASHFS_BIT(flags, \
+						SQUASHFS_NOID)
+
+#define SQUASHFS_MKFLAGS(noi, nod, nof, nox, noid, no_frag, always_frag, \
 		duplicate_checking, exportable, no_xattr, comp_opt) (noi | \
 		(nod << 1) | (nof << 3) | (no_frag << 4) | \
 		(always_frag << 5) | (duplicate_checking << 6) | \
 		(exportable << 7) | (nox << 8) | (no_xattr << 9) | \
-		(comp_opt << 10))
+		(comp_opt << 10) | (noid << 11))
 
 /* Max number of types and file types */
 #define SQUASHFS_DIR_TYPE		1
@@ -169,7 +173,8 @@
 #define SQUASHFS_MODE(a)		((a) & 0xfff)
 
 /* fragment and fragment table defines */
-#define SQUASHFS_FRAGMENT_BYTES(A)	((A) * sizeof(struct squashfs_fragment_entry))
+#define SQUASHFS_FRAGMENT_BYTES(A)	((A) * \
+					sizeof(struct squashfs_fragment_entry))
 
 #define SQUASHFS_FRAGMENT_INDEX(A)	(SQUASHFS_FRAGMENT_BYTES(A) / \
 					SQUASHFS_METADATA_SIZE)
@@ -217,7 +222,7 @@
 					sizeof(long long))
 
 /* xattr id lookup table defines */
-#define SQUASHFS_XATTR_BYTES(A)		((A) * sizeof(struct squashfs_xattr_id))
+#define SQUASHFS_XATTR_BYTES(A)		(((long long) (A)) * sizeof(struct squashfs_xattr_id))
 
 #define SQUASHFS_XATTR_BLOCK(A)		(SQUASHFS_XATTR_BYTES(A) / \
 					SQUASHFS_METADATA_SIZE)
@@ -281,6 +286,8 @@ typedef long long		squashfs_inode;
 #define LZMA_COMPRESSION	2
 #define LZO_COMPRESSION		3
 #define XZ_COMPRESSION		4
+#define LZ4_COMPRESSION		5
+#define ZSTD_COMPRESSION	6
 
 struct squashfs_super_block {
 	unsigned int		s_magic;
@@ -474,12 +481,10 @@ struct squashfs_fragment_entry {
 struct squashfs_xattr_entry {
 	unsigned short		type;
 	unsigned short		size;
-	char			data[0];
 };
 
 struct squashfs_xattr_val {
 	unsigned int		vsize;
-	char			value[0];
 };
 
 struct squashfs_xattr_id {

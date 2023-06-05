@@ -1,9 +1,11 @@
+#ifndef PSEUDO_H
+#define PSEUDO_H
 /*
  * Create a squashfs filesystem.  This is a highly compressed read only
  * filesystem.
  *
- * Copyright (c) 2009
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2009, 2010, 2014, 2017, 2021, 2022, 2023
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,19 +23,53 @@
  *
  * pseudo.h
  */
-struct pseudo_dev {
-	char		type;
+
+#define PSEUDO_FILE_OTHER	1
+#define PSEUDO_FILE_PROCESS	2
+#define PSEUDO_FILE_DATA	4
+
+#define IS_PSEUDO(a)		((a)->pseudo)
+#define IS_PSEUDO_PROCESS(a)	((a)->pseudo && ((a)->pseudo->pseudo_type & PSEUDO_FILE_PROCESS))
+#define IS_PSEUDO_OTHER(a)	((a)->pseudo && ((a)->pseudo->pseudo_type & PSEUDO_FILE_OTHER))
+#define IS_PSEUDO_DATA(a)	((a)->pseudo && ((a)->pseudo->pseudo_type & PSEUDO_FILE_DATA))
+
+struct pseudo_stat {
 	unsigned int	mode;
 	unsigned int	uid;
 	unsigned int	gid;
 	unsigned int	major;
 	unsigned int	minor;
-	int		pseudo_id;
-	int		fd;
-	int		child;
-#ifdef USE_TMP_FILE
+	time_t		mtime;
+	int		ino;
+};
+
+struct pseudo_file {
 	char		*filename;
-#endif
+	long long	start;
+	long long	current;
+	int		fd;
+};
+
+struct pseudo_data {
+	struct pseudo_file	*file;
+	long long		offset;
+	long long		length;
+	int			sparse;
+};
+
+struct pseudo_dev {
+	char				type;
+	int				pseudo_type;
+	union {
+		struct pseudo_stat	*buf;
+		struct stat		*linkbuf;
+	};
+	union {
+		struct pseudo_data	*data;
+		char			*command;
+		char			*symlink;
+		char			*linkname;
+	};
 };
 
 struct pseudo_entry {
@@ -41,17 +77,33 @@ struct pseudo_entry {
 	char			*pathname;
 	struct pseudo		*pseudo;
 	struct pseudo_dev	*dev;
+	struct pseudo_xattr	*xattr;
+	struct pseudo_entry	*next;
 };
 	
 struct pseudo {
 	int			names;
-	int			count;
-	struct pseudo_entry	*name;
+	struct pseudo_entry	*current;
+	struct pseudo_entry	*head;
 };
 
-extern int read_pseudo_def(struct pseudo **, char *);
-extern int read_pseudo_file(struct pseudo **, char *);
+struct pseudo_xattr {
+	int			count;
+	struct xattr_add	*xattr;
+};
+
+extern struct pseudo *pseudo;
+
+extern long long read_bytes(int, void *, long long);
+extern int read_pseudo_definition(char *, char *);
+extern int read_pseudo_file(char *, char *);
 extern struct pseudo *pseudo_subdir(char *, struct pseudo *);
 extern struct pseudo_entry *pseudo_readdir(struct pseudo *);
 extern struct pseudo_dev *get_pseudo_file(int);
-extern void delete_pseudo_files();
+extern int pseudo_exec_file(struct pseudo_dev *, int *);
+extern struct pseudo *get_pseudo();
+extern void dump_pseudos();
+extern char *get_element(char *target, char **targname);
+extern void print_definitions();
+extern struct pseudo_entry *pseudo_search(struct pseudo *, char *, int *);
+#endif

@@ -1,7 +1,7 @@
 /*
  *
- * Copyright (c) 2009, 2010
- * Phillip Lougher <phillip@lougher.demon.co.uk>
+ * Copyright (c) 2009, 2010, 2011, 2022
+ * Phillip Lougher <phillip@squashfs.org.uk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 
 #ifndef GZIP_SUPPORT
 static struct compressor gzip_comp_ops =  {
-	NULL, NULL, NULL, NULL, NULL, NULL, ZLIB_COMPRESSION, "gzip", 0
+	ZLIB_COMPRESSION, "gzip"
 };
 #else
 extern struct compressor gzip_comp_ops;
@@ -35,8 +35,7 @@ extern struct compressor gzip_comp_ops;
 
 #ifndef LZMA_SUPPORT
 static struct compressor lzma_comp_ops = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, LZMA_COMPRESSION,
-	"lzma", 0
+	LZMA_COMPRESSION, "lzma"
 };
 #else
 extern struct compressor lzma_comp_ops;
@@ -44,32 +43,48 @@ extern struct compressor lzma_comp_ops;
 
 #ifndef LZO_SUPPORT
 static struct compressor lzo_comp_ops = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, LZO_COMPRESSION, "lzo",
-	0
+	LZO_COMPRESSION, "lzo"
 };
 #else
 extern struct compressor lzo_comp_ops;
 #endif
 
+#ifndef LZ4_SUPPORT
+static struct compressor lz4_comp_ops = {
+	LZ4_COMPRESSION, "lz4"
+};
+#else
+extern struct compressor lz4_comp_ops;
+#endif
+
 #ifndef XZ_SUPPORT
 static struct compressor xz_comp_ops = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, XZ_COMPRESSION, "xz", 0
+	XZ_COMPRESSION, "xz"
 };
 #else
 extern struct compressor xz_comp_ops;
 #endif
 
+#ifndef ZSTD_SUPPORT
+static struct compressor zstd_comp_ops = {
+	ZSTD_COMPRESSION, "zstd"
+};
+#else
+extern struct compressor zstd_comp_ops;
+#endif
 
 static struct compressor unknown_comp_ops = {
-	NULL, NULL, NULL , NULL, NULL, NULL, NULL, NULL, 0, "unknown", 0
+	0, "unknown"
 };
 
 
 struct compressor *compressor[] = {
 	&gzip_comp_ops,
-	&lzma_comp_ops,
 	&lzo_comp_ops,
+	&lz4_comp_ops,
 	&xz_comp_ops,
+	&zstd_comp_ops,
+	&lzma_comp_ops,
 	&unknown_comp_ops
 };
 
@@ -98,20 +113,20 @@ struct compressor *lookup_compressor_id(int id)
 }
 
 
-void display_compressors(char *indent, char *def_comp)
+void display_compressors(FILE *stream, char *indent, char *def_comp)
 {
 	int i;
 
 	for(i = 0; compressor[i]->id; i++)
 		if(compressor[i]->supported)
-			fprintf(stderr, "%s\t%s%s\n", indent,
+			fprintf(stream, "%s\t%s%s\n", indent,
 				compressor[i]->name,
 				strcmp(compressor[i]->name, def_comp) == 0 ?
 				" (default)" : "");
 }
 
 
-void display_compressor_usage(char *def_comp)
+void display_compressor_usage(FILE *stream, char *def_comp)
 {
 	int i;
 
@@ -120,11 +135,11 @@ void display_compressor_usage(char *def_comp)
 			char *str = strcmp(compressor[i]->name, def_comp) == 0 ?
 				" (default)" : "";
 			if(compressor[i]->usage) {
-				fprintf(stderr, "\t%s%s\n",
+				fprintf(stream, "\t%s%s\n",
 					compressor[i]->name, str);
-				compressor[i]->usage();
+				compressor[i]->usage(stream);
 			} else
-				fprintf(stderr, "\t%s (no options)%s\n",
+				fprintf(stream, "\t%s (no options)%s\n",
 					compressor[i]->name, str);
 		}
 }
